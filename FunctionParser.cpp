@@ -17,12 +17,12 @@
 using namespace std;
 
 typedef enum { T_INVALID = 0, T_ISWHITE,
-			   T_LPAREN, T_RPAREN,
-			   T_COMMA,
-			   T_MINUS,T_ADD, T_MUL, T_DIV, T_POWER,
+               T_LPAREN, T_RPAREN,
+               T_COMMA,
+               T_MINUS,T_ADD, T_MUL, T_DIV, T_POWER,
                T_FPNUMBER,T_INTNUMBER,
-               T_IDENT,			   
-			   T_ERROR, T_EOF
+               T_IDENT,            
+               T_ERROR, T_EOF
 }  token_type_t;
 
 
@@ -40,55 +40,55 @@ typedef enum { T_INVALID = 0, T_ISWHITE,
 
 static const char *token_type_to_str( token_type_t tt )
 {
-	switch( tt )
-	{
-	case T_INVALID:
-		return "INVALID";
-   	case T_ISWHITE:
-		return "is white";
+    switch( tt )
+    {
+    case T_INVALID:
+        return "INVALID";
+    case T_ISWHITE:
+        return "is white";
 
-	case T_LPAREN:
-		return " ( ";
-	case T_RPAREN:
-		return " ) ";
+    case T_LPAREN:
+        return " ( ";
+    case T_RPAREN:
+        return " ) ";
 
     case T_COMMA:
         return " , ";
-	
+    
     case T_MINUS:
-		return " MINUS ";
-	case T_ADD:
-		return "+";
-	case T_MUL:
-		return "*";
-	case T_DIV:
-		return "/";
+        return " MINUS ";
+    case T_ADD:
+        return "+";
+    case T_MUL:
+        return "*";
+    case T_DIV:
+        return "/";
     case T_POWER:
         return "^";
         
     case T_FPNUMBER:
-		return "FP NUMBER";
-	case T_INTNUMBER:
-		return "INTNUMBER";
+        return "FP NUMBER";
+    case T_INTNUMBER:
+        return "INTNUMBER";
     case T_IDENT:
         return "IDENT";
         
-	case T_ERROR:
-		return "error";
-	case T_EOF:
-		return "EOF";
-	default:
-		return "? unknown token ?";
-	}
-	return "";
+    case T_ERROR:
+        return "error";
+    case T_EOF:
+        return "EOF";
+    default:
+        return "? unknown token ?";
+    }
+    return "";
 }
 
 
 
 // a token has a value and a type
 typedef struct {
-	token_type_t type;
-	char        *value;
+    token_type_t type;
+    char        *value;
 } token_t;
 
 
@@ -202,19 +202,19 @@ private:
 // parser helper class
 class FunctionParserException {
 
-	FunctionParserException();
+    FunctionParserException();
 public:
-	FunctionParserException( const string & s ) : desc(s)
-	{
-	}
+    FunctionParserException( const string & s ) : desc(s)
+    {
+    }
 
-	string reason() const
-	{
-		return desc;
-	}
+    string reason() const
+    {
+        return desc;
+    }
 
 private:
-	string desc;
+    string desc;
 };
 
 
@@ -249,49 +249,49 @@ class FunctionParserOperators {
         return pow( b, e);
     }
         
-	
+    
 public:
-	FunctionParserOperators(): ins(0) {}
+    FunctionParserOperators(): ins(0) {}
 
     ~FunctionParserOperators()
     { if( ins ) delete [] ins; }
     
 private:
-	void push( double v )
-	{
-		vstack.push(v);
-	}
+    void push( double v )
+    {
+        vstack.push(v);
+    }
 
 
-	double pop()
-	{
-		assert( vstack.size() > 0 );
-		double v = vstack.top();
-		vstack.pop();
-		return v;
-	}
+    double pop()
+    {
+        assert( vstack.size() > 0 );
+        double v = vstack.top();
+        vstack.pop();
+        return v;
+    }
     
 public:
-	void op( const token_t& op_token );
-	void unary_op( token_type_t op_type );
-	void function_op( FctPFunctions *func );
+    void op( const token_t& op_token );
+    void unary_op( token_type_t op_type );
+    void function_op( FctPFunctions *func );
     void variable_op( FctPVariable *v );
     void constant_op( double constant );
     
-	void printTop() const   // DEBUG
-	{
-		if( vstack.size() > 0 )
-			cout << std::setprecision(16) << vstack.top() << endl;
-		else
-			cout << "no value on stack" << endl;
-	}
+    void printTop() const   // DEBUG
+    {
+        if( vstack.size() > 0 )
+            cout << std::setprecision(16) << vstack.top() << endl;
+        else
+            cout << "no value on stack" << endl;
+    }
     
 public:
-	void assembleInstructions();
+    void assembleInstructions();
     double executor();
     
 private:
-	value_stack_t vstack;
+    value_stack_t vstack;
 
     list<FunctionParserInstr> tmp_inst_list;
     FunctionParserInstr *ins;
@@ -385,32 +385,32 @@ double FunctionParserOperators::executor()
 
 void FunctionParserOperators::op( const token_t& op_token )
 {
-	switch( op_token.type )
-	{
-		case T_ADD:
+    switch( op_token.type )
+    {
+        case T_ADD:
             tmp_inst_list.push_back( FunctionParserInstr::PLUS );
-			break;
-		case T_MINUS:
+            break;
+        case T_MINUS:
             tmp_inst_list.push_back( FunctionParserInstr::MINUS );
-			break;
-		case T_MUL:
+            break;
+        case T_MUL:
             tmp_inst_list.push_back( FunctionParserInstr::MULT );
-			break;
-		case T_DIV:
+            break;
+        case T_DIV:
             tmp_inst_list.push_back( FunctionParserInstr::DIV );
-			break;
+            break;
         case T_POWER:   // ^
             tmp_inst_list.push_back( FunctionParserInstr::POW );
             break;
-		default:
-			throw FunctionParserException( "unsupported operand" );
-	}
+        default:
+            throw FunctionParserException( "unsupported operand" );
+    }
 }
 
 
 void FunctionParserOperators::unary_op( token_type_t op_type )
 {
-	if( op_type == T_MINUS )
+    if( op_type == T_MINUS )
         tmp_inst_list.push_back( FunctionParserInstr::UNARY_MINUS );
 }
 
@@ -434,17 +434,17 @@ void FunctionParserOperators::constant_op( double constant )
 
 
 class FunctionParser {
-	FunctionParserOperators opera;
-	
+    FunctionParserOperators opera;
+    
 public:
-	FunctionParser( const string &fct )
-	{
-		scanner_init( fct.c_str() );
-		err_state = false;
-		done = false;
+    FunctionParser( const string &fct )
+    {
+        scanner_init( fct.c_str() );
+        err_state = false;
+        done = false;
 
         addDefaultFunctions();
-	}
+    }
     
     ~FunctionParser()
     {
@@ -479,7 +479,7 @@ public:
     }
     
 private:
-	void scanner_init( const char *fkt );
+    void scanner_init( const char *fkt );
     void scanner_reset();
     char consume_char();
     char peek_char();
@@ -490,72 +490,72 @@ private:
     token_t tokenize();
 
     
-	const token_t& get_current_token()
-	{
-		return current_token;
-	}
+    const token_t& get_current_token()
+    {
+        return current_token;
+    }
 
-	void consume()
-	{
-		do {
-			current_token = tokenize();
-			if( current_token.type == T_EOF )
-				break;
-			
-		} while( current_token.type == T_ISWHITE );
+    void consume()
+    {
+        do {
+            current_token = tokenize();
+            if( current_token.type == T_EOF )
+                break;
+            
+        } while( current_token.type == T_ISWHITE );
 
-//		cout << "just consumed: " << token_type_to_str( current_token.type ) << ": "
-//			 << ((current_token.value  && *(current_token.value))?current_token.value:"") << endl;
-	}
-	
-	bool is_here( token_type_t tt )
-	{
-		return current_token.type == tt;
-	}
-	
-	token_type_t peek()
-	{
-		return current_token.type;
-	}
-	
-	string expect( token_type_t tt, bool advance = true)
-	{
+//      cout << "just consumed: " << token_type_to_str( current_token.type ) << ": "
+//           << ((current_token.value  && *(current_token.value))?current_token.value:"") << endl;
+    }
+    
+    bool is_here( token_type_t tt )
+    {
+        return current_token.type == tt;
+    }
+    
+    token_type_t peek()
+    {
+        return current_token.type;
+    }
+    
+    string expect( token_type_t tt, bool advance = true)
+    {
         string s = current_token.value;
         
-		if( !is_here( tt ) )
-		{
-			if( tt == T_FPNUMBER && current_token.type == T_INTNUMBER )  // fp relax for ints
-			{
-				if( advance )
-					consume();
-			}
-			else
-				throw FunctionParserException(
-										  string("expected ") + token_type_to_str( tt ) + " but found " +
-										  token_type_to_str( current_token.type ) );
-		}
-		else if( advance )
-			consume();
-		
-		return s;
-	}
-	
-	bool has_next_token()
-	{
-		return !is_here( T_EOF );
-	}
+        if( !is_here( tt ) )
+        {
+            if( tt == T_FPNUMBER && current_token.type == T_INTNUMBER )  // fp relax for ints
+            {
+                if( advance )
+                    consume();
+            }
+            else
+                throw FunctionParserException(
+                                          string("expected ") + token_type_to_str( tt ) + " but found " +
+                                          token_type_to_str( current_token.type ) );
+        }
+        else if( advance )
+            consume();
+        
+        return s;
+    }
+    
+    bool has_next_token()
+    {
+        return !is_here( T_EOF );
+    }
 
     void eval_function( const string &name );
     void eval_variable( const string &name );
     
-	void eval_simple_expr();
-	void eval_unary_expr();
-	void eval_primary_expr();
+    void eval_simple_expr();
+    void eval_unary_expr();
+    void eval_primary_expr();
     void eval_exponent();
-	void eval_multiplicative();
-	void eval_additive();
-	
-	void eval_expr();
+    void eval_multiplicative();
+    void eval_additive();
+    
+    void eval_expr();
 
 
     void addDefaultFunctions()
@@ -578,13 +578,13 @@ public:
         result = opera.executor();
     }
     
-	bool is_ok()
-	{
-		return !err_state;
-	}
-	
-	bool parse();
-	
+    bool is_ok()
+    {
+        return !err_state;
+    }
+    
+    bool parse();
+    
 private:
 #define MAX_TOKEN_CHARS    1023
     char current_token_value[1024];
@@ -592,10 +592,10 @@ private:
 
     int current_pos;
     const char *scanner_fct;
-	token_t current_token;
-	
-	bool err_state;
-	bool at_eof,done;
+    token_t current_token;
+    
+    bool err_state;
+    bool at_eof,done;
 
     Functions_t functions;   //! maps function name to binder object
     Variables_t variables;   //! maps variable name to binder object
@@ -645,9 +645,9 @@ vector<string> FunctionParser::getVariables() const
 
 void FunctionParser::scanner_init( const char *fkt ) 
 {
-	current_char = 0;
-	at_eof = true;
-	current_pos = 0;
+    current_char = 0;
+    at_eof = true;
+    current_pos = 0;
 
     scanner_fct = fkt;
     if( (current_char = scanner_fct[0] ) != 0 )
@@ -660,8 +660,8 @@ void FunctionParser::scanner_init( const char *fkt )
 
 void FunctionParser::scanner_reset() 
 {
-	at_eof = false;
-	current_pos = 0;
+    at_eof = false;
+    current_pos = 0;
     current_token.type = T_INVALID;
 
     current_char = scanner_fct[0];
@@ -670,223 +670,223 @@ void FunctionParser::scanner_reset()
 
 char FunctionParser::consume_char()
 {
-	char cc = current_char;
-	if( (current_char = scanner_fct[++current_pos]) != 0 )
-	{
-		return cc;
-	}
-	else
-	{
-		at_eof = true;
-		current_char = 0;
-		current_token.type = T_EOF;
-		return cc;
-	}
+    char cc = current_char;
+    if( (current_char = scanner_fct[++current_pos]) != 0 )
+    {
+        return cc;
+    }
+    else
+    {
+        at_eof = true;
+        current_char = 0;
+        current_token.type = T_EOF;
+        return cc;
+    }
 }
 
 
 char FunctionParser::peek_char()
 {
-	if( current_char != 0 )
-	{
-		return current_char;
-	}
-	else
-	{
-		at_eof = true;
-		return (char)0;
-	}
+    if( current_char != 0 )
+    {
+        return current_char;
+    }
+    else
+    {
+        at_eof = true;
+        return (char)0;
+    }
 }
 
 
 bool FunctionParser::scanDecimalLiteral( char *s, bool *is_int )
 {
-	char c = peek_char();
-	int before_dot = 0;
-	
-	assert( is_digit(c) || (c == '.') );
+    char c = peek_char();
+    int before_dot = 0;
+    
+    assert( is_digit(c) || (c == '.') );
 
-	*is_int = false;
-	
-	if( is_digit(c) ) {
-		before_dot++;
-		*s = consume_char(); s++;
-		while( is_digit(peek_char()) )
-		{
-			*s = consume_char(); s++;
-		}	
-	}
-	if( peek_char()=='.' ) {
-		*s = consume_char();
-		s++;
-		
-		if( before_dot && (peek_char() == 'e' || peek_char() == 'E') ) {  // 3.E+10 case
-			return scanExponentPart( s );
-		}
-		else
-		{
-			if( before_dot == 0 && !is_digit(peek_char()) ) // .E+10 not allowed
-			{
-				*s = 0;
-				return false;
-			}
-			else
-			{
-				while( is_digit(peek_char()) )
-				{
-					*s = consume_char(); s++;
-				}
-				*s = 0;
-				if( peek_char() == 'e' || peek_char() == 'E' )
-					return scanExponentPart( s );
-				else
-					return true;
-			}
-		}
-	}
-	else if(before_dot && (peek_char() == 'e' || peek_char() == 'E'))   // 3E+10 case
-		return scanExponentPart( s );
+    *is_int = false;
+    
+    if( is_digit(c) ) {
+        before_dot++;
+        *s = consume_char(); s++;
+        while( is_digit(peek_char()) )
+        {
+            *s = consume_char(); s++;
+        }   
+    }
+    if( peek_char()=='.' ) {
+        *s = consume_char();
+        s++;
+        
+        if( before_dot && (peek_char() == 'e' || peek_char() == 'E') ) {  // 3.E+10 case
+            return scanExponentPart( s );
+        }
+        else
+        {
+            if( before_dot == 0 && !is_digit(peek_char()) ) // .E+10 not allowed
+            {
+                *s = 0;
+                return false;
+            }
+            else
+            {
+                while( is_digit(peek_char()) )
+                {
+                    *s = consume_char(); s++;
+                }
+                *s = 0;
+                if( peek_char() == 'e' || peek_char() == 'E' )
+                    return scanExponentPart( s );
+                else
+                    return true;
+            }
+        }
+    }
+    else if(before_dot && (peek_char() == 'e' || peek_char() == 'E'))   // 3E+10 case
+        return scanExponentPart( s );
 
-	if( before_dot )
-		*is_int = true;
-	*s = 0;
-	return true;
+    if( before_dot )
+        *is_int = true;
+    *s = 0;
+    return true;
 }
 
 
 bool FunctionParser::scanExponentPart( char *s )  // exp. part is always optional
 {
-	char c = peek_char();
-	
-	assert( (c == 'e') || (c == 'E') );
-	
-	*s = consume_char(); s++;
-	
-	c = peek_char();
-	if( (c == '+') || (c == '-') )      // exponent can have a sign
-	{
-		*s = consume_char(); s++;
-	}
+    char c = peek_char();
+    
+    assert( (c == 'e') || (c == 'E') );
+    
+    *s = consume_char(); s++;
+    
+    c = peek_char();
+    if( (c == '+') || (c == '-') )      // exponent can have a sign
+    {
+        *s = consume_char(); s++;
+    }
 
-	c = peek_char();
-	if( is_digit(c) ){                        // consume digits after e,e- or e+
-		*s = consume_char(); s++;
-		while( is_digit(peek_char()) )
-		{
-			*s = consume_char(); s++;
-		}
-	}
-	else     // this is an error since exponent indicated but not followed by integer
-		return false;
-	*s = 0;
-	return true;
+    c = peek_char();
+    if( is_digit(c) ){                        // consume digits after e,e- or e+
+        *s = consume_char(); s++;
+        while( is_digit(peek_char()) )
+        {
+            *s = consume_char(); s++;
+        }
+    }
+    else     // this is an error since exponent indicated but not followed by integer
+        return false;
+    *s = 0;
+    return true;
 }
 
 
 token_t FunctionParser::tokenize()
 {
-	char *s = current_token_value ;
-	token_t t;
-	int errors=0;
-	token_type_t tt;
-	char c = peek_char();
-	
-	t.value = current_token_value;
-	*s = 0;
+    char *s = current_token_value ;
+    token_t t;
+    int errors=0;
+    token_type_t tt;
+    char c = peek_char();
     
-	if( !at_eof )
-	{
-		if( is_white(c) )
-		{
-			while( !at_eof && is_white(peek_char()) )
-				consume_char(); 
-			tt = T_ISWHITE;
-		}
-		else if( is_entity_beg(c) )
-		{
-			*s = consume_char(); s++;
-			
-			while( !at_eof && is_entity_char(peek_char()) )
-			{
-				*s = consume_char(); s++;
-			}
-			*s = 0;
-			
-			tt = T_IDENT;
-		}
-		else if( c=='(' )
-		{
-			consume_char();
-			tt = T_LPAREN;
-		}
-		else if( c==')' )
-		{
-			consume_char();
-			tt = T_RPAREN;
-		}
-		else if( is_fpnum_beg(c) ) {
-			bool is_int;
-			if( !scanDecimalLiteral( s, &is_int) )
-				errors++;
-			tt = (is_int)?T_INTNUMBER:T_FPNUMBER;
-		}
-        else if( c=='-' )
-		{
-			consume_char();
-			tt = T_MINUS;
-		}
-		else if( c=='+' )
-		{
-			consume_char();
-			tt = T_ADD;
-		}
-		else if( c=='*' )
-		{
-			consume_char();
-			tt = T_MUL;
-		}
-		else if( c=='/' )
-		{
-			consume_char();
-            tt = T_DIV;
-		}
-        else if( c=='^' )
-		{
-			consume_char();
-            tt = T_POWER;
-		}
-        else if( c==',' )
-		{
-			consume_char();
-            tt = T_COMMA;
-		}
-		else
-		{
-			cerr << "unexpected char";
-			if( !at_eof )
-				cerr << " '" << c << "'";
-			cerr << "\n";
-			errors++;
-		}
-		if( !errors )
-		{
-			t.type  = tt;
-		}
-	}
-	else
-		t.type  = T_EOF;
-	
-	if( errors )
+    t.value = current_token_value;
+    *s = 0;
+    
+    if( !at_eof )
     {
-		t.type  = T_ERROR;
-		*t.value = 0;
+        if( is_white(c) )
+        {
+            while( !at_eof && is_white(peek_char()) )
+                consume_char(); 
+            tt = T_ISWHITE;
+        }
+        else if( is_entity_beg(c) )
+        {
+            *s = consume_char(); s++;
+            
+            while( !at_eof && is_entity_char(peek_char()) )
+            {
+                *s = consume_char(); s++;
+            }
+            *s = 0;
+            
+            tt = T_IDENT;
+        }
+        else if( c=='(' )
+        {
+            consume_char();
+            tt = T_LPAREN;
+        }
+        else if( c==')' )
+        {
+            consume_char();
+            tt = T_RPAREN;
+        }
+        else if( is_fpnum_beg(c) ) {
+            bool is_int;
+            if( !scanDecimalLiteral( s, &is_int) )
+                errors++;
+            tt = (is_int)?T_INTNUMBER:T_FPNUMBER;
+        }
+        else if( c=='-' )
+        {
+            consume_char();
+            tt = T_MINUS;
+        }
+        else if( c=='+' )
+        {
+            consume_char();
+            tt = T_ADD;
+        }
+        else if( c=='*' )
+        {
+            consume_char();
+            tt = T_MUL;
+        }
+        else if( c=='/' )
+        {
+            consume_char();
+            tt = T_DIV;
+        }
+        else if( c=='^' )
+        {
+            consume_char();
+            tt = T_POWER;
+        }
+        else if( c==',' )
+        {
+            consume_char();
+            tt = T_COMMA;
+        }
+        else
+        {
+            cerr << "unexpected char";
+            if( !at_eof )
+                cerr << " '" << c << "'";
+            cerr << "\n";
+            errors++;
+        }
+        if( !errors )
+        {
+            t.type  = tt;
+        }
+    }
+    else
+        t.type  = T_EOF;
+    
+    if( errors )
+    {
+        t.type  = T_ERROR;
+        *t.value = 0;
         current_token_value[0] = '\0'; 
-		cerr << "tokenizer has errors.\n";
-	}
-	current_token.type = t.type;
-	current_token.value = current_token_value;
-	
-	return t;
+        cerr << "tokenizer has errors.\n";
+    }
+    current_token.type = t.type;
+    current_token.value = current_token_value;
+    
+    return t;
 }
 
 
@@ -923,19 +923,19 @@ void FunctionParser::eval_variable(const string &name)
 
 void FunctionParser::eval_simple_expr()
 {
-	switch( peek() )
-	{
-		case T_FPNUMBER:
-		case T_INTNUMBER:
-			cout << current_token.value << endl;
-			opera.constant_op( double(atof(current_token.value)) );
+    switch( peek() )
+    {
+        case T_FPNUMBER:
+        case T_INTNUMBER:
+            cout << current_token.value << endl;
+            opera.constant_op( double(atof(current_token.value)) );
             consume();
-			break;
-			
-		case T_IDENT:
-			{
-				cout << current_token.value << endl;
-			
+            break;
+            
+        case T_IDENT:
+            {
+                cout << current_token.value << endl;
+            
                 string ident = current_token.value;
                 consume();
                 if( is_here( T_LPAREN ) ) // function ?
@@ -946,46 +946,46 @@ void FunctionParser::eval_simple_expr()
                     eval_variable(ident);
                 }
             }
-			break;
-			
-		default:
-			throw FunctionParserException(
-									  string("unexpected value (found ") +
-									  (*current_token.value?current_token.value:
-									   token_type_to_str( current_token.type )) + ")" );
-			break;
-	}
+            break;
+            
+        default:
+            throw FunctionParserException(
+                                      string("unexpected value (found ") +
+                                      (*current_token.value?current_token.value:
+                                       token_type_to_str( current_token.type )) + ")" );
+            break;
+    }
 }
 
 
 void FunctionParser::eval_unary_expr()
 {
-	if( is_here( T_MINUS)  )
-	{
-		consume();
-		// cout << "found unary minus!" << endl;
-		eval_primary_expr();
-		cout << "* -1" << endl;
-		opera.unary_op( T_MINUS );
-	}
-	else
-		eval_simple_expr();
+    if( is_here( T_MINUS)  )
+    {
+        consume();
+        // cout << "found unary minus!" << endl;
+        eval_primary_expr();
+        cout << "* -1" << endl;
+        opera.unary_op( T_MINUS );
+    }
+    else
+        eval_simple_expr();
 }
 
 
 void FunctionParser::eval_primary_expr()
 {
-	if( is_here( T_LPAREN ) )
-	{
-		consume();
-		eval_expr();
+    if( is_here( T_LPAREN ) )
+    {
+        consume();
+        eval_expr();
 
-		expect( T_RPAREN );
-	}
-	else
-	{
-		eval_unary_expr();
-	}
+        expect( T_RPAREN );
+    }
+    else
+    {
+        eval_unary_expr();
+    }
 }
 
 
@@ -1008,72 +1008,72 @@ void FunctionParser::eval_exponent()
 void FunctionParser::eval_multiplicative()
 {
     eval_exponent();
-	
-	while( is_here( T_MUL ) || is_here( T_DIV ) )
-	{
-		string op = is_here( T_MUL )?"*":"/";
-		token_t t = current_token;
-		
-		consume();
-		
-		eval_exponent();
-		cout << " " << op << endl;
-		opera.op( t );
-	}
+    
+    while( is_here( T_MUL ) || is_here( T_DIV ) )
+    {
+        string op = is_here( T_MUL )?"*":"/";
+        token_t t = current_token;
+        
+        consume();
+        
+        eval_exponent();
+        cout << " " << op << endl;
+        opera.op( t );
+    }
 }
 
 
 void FunctionParser::eval_additive()
 {
-	eval_multiplicative();
-	
-	while( is_here( T_ADD ) || is_here( T_MINUS ) )
-	{
-		string op = is_here( T_ADD )?"+":"-";
-		token_t t = current_token;
-		
-		consume();
-		
-		eval_multiplicative();
-		cout << " " << op << endl;
-		opera.op( t );
-	}
+    eval_multiplicative();
+    
+    while( is_here( T_ADD ) || is_here( T_MINUS ) )
+    {
+        string op = is_here( T_ADD )?"+":"-";
+        token_t t = current_token;
+        
+        consume();
+        
+        eval_multiplicative();
+        cout << " " << op << endl;
+        opera.op( t );
+    }
 }
 
 
 void FunctionParser::eval_expr()
 {
-	eval_additive();
+    eval_additive();
 }
 
 
 bool FunctionParser::parse()
 {
-	try {
-		consume();
+    try {
+        consume();
         eval_expr();
-	}
+    }
     catch( FunctionParserException & e ) {
-		cerr << e.reason() << endl;
-		err_state = true;
-	}
+        cerr << e.reason() << endl;
+        err_state = true;
+    }
 
-	if( !is_here( T_EOF ) )
-	{
-		// leftovers?
-		if( !err_state && has_next_token() )
-		{
-			cerr << "syntax error near '"
-				 << get_current_token().value << "' at end of input" << endl;
-			consume();
-			err_state = true;
-		}
-	}
+    if( !is_here( T_EOF ) )
+    {
+        // leftovers?
+        if( !err_state && has_next_token() )
+        {
+            cerr << "syntax error near '"
+                 << get_current_token().value << "' at end of input" << endl;
+            consume();
+            err_state = true;
+        }
+    }
     
     opera.assembleInstructions();
     
     scanner_reset();   // reset scanner
-	return !err_state;
+    return !err_state;
 }
 
 
@@ -1134,7 +1134,7 @@ void loopThrough( FunctionParser &parser, vector<var_helper> &vars)
 int main( int argc, char *argv[])
 {
     //FunctionParser parser( " 5*5*5*5*5*5*5*5*5 " );
-	//FunctionParser parser( " 1+sin(x)*cos(y)+2*sqrt(x+y)+ sin(x)*cos(y)+2*sqrt(x+y)" );
+    //FunctionParser parser( " 1+sin(x)*cos(y)+2*sqrt(x+y)+ sin(x)*cos(y)+2*sqrt(x+y)" );
 
     string func;
     cout << "function > ";
@@ -1187,5 +1187,5 @@ int main( int argc, char *argv[])
         cout << "result :   " << parser.getResult() << "\n";
     }
 
-	return 0;
+    return 0;
 }
