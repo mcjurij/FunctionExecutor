@@ -15,3 +15,8 @@ for( x = 0.; x < 4.; x+=0.2)
     cout << "result :   " << parser.getResult() << "\n";
 }
 ```
+
+Any function with any number of variables is allowed. Variable names will be
+detected automagically, so you can name them as you like. See main() in
+FunctionParser.cpp with interactive intput of a function string and input of
+values for start, stop and step for every variable detected.
