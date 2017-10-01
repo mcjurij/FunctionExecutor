@@ -586,7 +586,6 @@ public:
     bool parse();
     
 private:
-#define MAX_TOKEN_CHARS    1023
     char current_token_value[1024];
     char current_char;
 
@@ -1172,7 +1171,6 @@ int main( int argc, char *argv[])
 
         vars.back().value -= vars.back().step;  // a tiny bit of trickery needed for nextVal()
         
-        // reverse( vars.begin(), vars.end());
         for( size_t i = 0; i < vars.size(); i++)
         {
             var_helper &var = vars[i];
