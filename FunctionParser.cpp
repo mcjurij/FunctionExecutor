@@ -12,7 +12,7 @@
 #include <cmath>
 #include <map>
 #include <list>
-#include <algorithm>    // std::reverse
+//#include <algorithm>    // std::reverse
 
 using namespace std;
 
