@@ -3,6 +3,8 @@ A function given as a string is parsed and intermediate code is executed
 
 Example:
 ```
+#include "FunctionParser.h"
+
 FunctionParser parser( "sin(pi*x)" );
 
 parser.addConstant( "pi", M_PI);    // add constants, if you don't they will be treated as variables
@@ -22,3 +24,5 @@ Any function with any number of variables is allowed. Variable names will be
 detected automagically, so you can name them as you like. See main() in
 FunctionParser.cpp with interactive intput of a function string and input of
 values for start, stop and step for every variable detected.
+
+Compile like so: g++ -o fp main.cpp FunctionParser.cpp

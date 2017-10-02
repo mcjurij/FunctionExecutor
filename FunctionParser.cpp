@@ -5,26 +5,14 @@
  */
 #include <cassert>
 #include <iostream>
-#include <string>
 #include <stack>
-#include <vector>
 #include <iomanip>
 #include <cmath>
-#include <map>
 #include <list>
-//#include <algorithm>    // std::reverse
+
+#include "FunctionParser.h"
 
 using namespace std;
-
-typedef enum { T_INVALID = 0, T_ISWHITE,
-               T_LPAREN, T_RPAREN,
-               T_COMMA,
-               T_MINUS,T_ADD, T_MUL, T_DIV, T_POWER,
-               T_FPNUMBER,T_INTNUMBER,
-               T_IDENT,            
-               T_ERROR, T_EOF
-}  token_type_t;
-
 
 // intentionally not using cctype here -- locale sucks
 #define is_digit(c) ((c)>='0' && (c)<='9')
@@ -38,7 +26,7 @@ typedef enum { T_INVALID = 0, T_ISWHITE,
 #define is_fpnum_beg(c) (is_digit(c) || (c)=='.')
 
 
-static const char *token_type_to_str( token_type_t tt )
+const char *FunctionParser::token_type_to_str( token_type_t tt )
 {
     switch( tt )
     {
@@ -85,22 +73,7 @@ static const char *token_type_to_str( token_type_t tt )
 
 
 
-// a token has a value and a type
-typedef struct {
-    token_type_t type;
-    char        *value;
-} token_t;
-
-
 typedef stack<double, vector<double> > value_stack_t;
-
-class FctPFunctions;
-typedef map<string,FctPFunctions *> Functions_t;
-
-class FctPVariable;
-typedef map<string,FctPVariable *> Variables_t;
-
-typedef map<string,double> Constants_t;
 
 // base class for function binders
 class FctPFunctions {
@@ -274,8 +247,8 @@ private:
     }
     
 public:
-    void op( const token_t& op_token );
-    void unary_op( token_type_t op_type );
+    void op( const FunctionParser::token_t& op_token );
+    void unary_op( FunctionParser::token_type_t op_type );
     void function_op( FctPFunctions *func );
     void variable_op( FctPVariable *v );
     void constant_op( double constant );
@@ -283,9 +256,9 @@ public:
     void printTop() const   // DEBUG
     {
         if( vstack.size() > 0 )
-            cout << std::setprecision(16) << vstack.top() << endl;
+            cout << vstack.top() << "\n";
         else
-            cout << "no value on stack" << endl;
+            cerr << "no value on stack\n";
     }
     
 public:
@@ -385,23 +358,23 @@ double FunctionParserOperators::executor()
 }
 
 
-void FunctionParserOperators::op( const token_t& op_token )
+void FunctionParserOperators::op( const FunctionParser::token_t& op_token )
 {
     switch( op_token.type )
     {
-        case T_ADD:
+        case FunctionParser::T_ADD:
             tmp_inst_list.push_back( FunctionParserInstr::PLUS );
             break;
-        case T_MINUS:
+        case FunctionParser::T_MINUS:
             tmp_inst_list.push_back( FunctionParserInstr::MINUS );
             break;
-        case T_MUL:
+        case FunctionParser::T_MUL:
             tmp_inst_list.push_back( FunctionParserInstr::MULT );
             break;
-        case T_DIV:
+        case FunctionParser::T_DIV:
             tmp_inst_list.push_back( FunctionParserInstr::DIV );
             break;
-        case T_POWER:   // ^
+        case FunctionParser::T_POWER:   // ^
             tmp_inst_list.push_back( FunctionParserInstr::POW );
             break;
         default:
@@ -410,9 +383,9 @@ void FunctionParserOperators::op( const token_t& op_token )
 }
 
 
-void FunctionParserOperators::unary_op( token_type_t op_type )
+void FunctionParserOperators::unary_op( FunctionParser::token_type_t op_type )
 {
-    if( op_type == T_MINUS )
+    if( op_type == FunctionParser::T_MINUS )
         tmp_inst_list.push_back( FunctionParserInstr::UNARY_MINUS );
 }
 
@@ -435,178 +408,43 @@ void FunctionParserOperators::constant_op( double constant )
 }
 
 
-class FunctionParser {
-    FunctionParserOperators opera;
+// FunctionParser --------------------------------------------------------------
+FunctionParser::FunctionParser( const std::string &fct )
+{
+    scanner_init( fct.c_str() );
+    err_state = false;
+    done = false;
     
-public:
-    FunctionParser( const string &fct )
-    {
-        scanner_init( fct.c_str() );
-        err_state = false;
-        done = false;
+    addDefaultFunctions();
 
-        addDefaultFunctions();
-    }
-    
-    ~FunctionParser()
-    {
-        Functions_t::iterator it;
-        for( it = functions.begin(); it != functions.end(); ++it)
-            delete it->second;
-
-        Variables_t::iterator itv;
-        for( itv = variables.begin(); itv != variables.end(); ++itv)
-            delete itv->second;
-    }
-    
-    void addFunction1Arg( double (*f)(double), const char *name )
-    {
-        functions[ name ] = new FctPFunctionsBind1( f );
-    }
-    
-    void addFunction2Arg( double (*f)(double,double), const char *name )
-    {
-        functions[ name ] = new FctPFunctionsBind2( f );
-    }
-
-    FctPVariable *addVariable( const string &name );
-
-    void bindVariable( const string &name, double *addr) const;
-
-    vector<string> getVariables() const;
-
-    void addConstant( const string &name, double val);
-    
-    double getResult() const
-    {
-        return result;
-    }
-    
-private:
-    void scanner_init( const char *fkt );
-    void scanner_reset();
-    char consume_char();
-    char peek_char();
-    
-    bool scanDecimalLiteral( char *s, bool *is_int );
-    bool scanExponentPart( char *s );
-    
-    token_t tokenize();
-
-    
-    const token_t& get_current_token()
-    {
-        return current_token;
-    }
-
-    void consume()
-    {
-        do {
-            current_token = tokenize();
-            if( current_token.type == T_EOF )
-                break;
-            
-        } while( current_token.type == T_ISWHITE );
-
-//      cout << "just consumed: " << token_type_to_str( current_token.type ) << ": "
-//           << ((current_token.value  && *(current_token.value))?current_token.value:"") << endl;
-    }
-    
-    bool is_here( token_type_t tt )
-    {
-        return current_token.type == tt;
-    }
-    
-    token_type_t peek()
-    {
-        return current_token.type;
-    }
-    
-    string expect( token_type_t tt, bool advance = true)
-    {
-        string s = current_token.value;
-        
-        if( !is_here( tt ) )
-        {
-            if( tt == T_FPNUMBER && current_token.type == T_INTNUMBER )  // fp relax for ints
-            {
-                if( advance )
-                    consume();
-            }
-            else
-                throw FunctionParserException(
-                                          string("expected ") + token_type_to_str( tt ) + " but found " +
-                                          token_type_to_str( current_token.type ) );
-        }
-        else if( advance )
-            consume();
-        
-        return s;
-    }
-    
-    bool has_next_token()
-    {
-        return !is_here( T_EOF );
-    }
-
-    void eval_function( const string &name );
-    void eval_variable( const string &name );
-    
-    void eval_simple_expr();
-    void eval_unary_expr();
-    void eval_primary_expr();
-    void eval_exponent();
-    void eval_multiplicative();
-    void eval_additive();
-    
-    void eval_expr();
+    opera = new FunctionParserOperators();
+}
 
 
-    void addDefaultFunctions()
-    {
-        addFunction1Arg( log, "log");         // natural logarithm (base e)
-        addFunction1Arg( log10, "log10");     // base-10 logarithm
-        addFunction1Arg( exp, "exp");         // returns the value of e raised to the power of x (= e^x)
-        addFunction1Arg( sqrt, "sqrt");       // returns the non-negative square root of x
-        addFunction1Arg( sin, "sin" );
-        addFunction1Arg( cos, "cos" );
-        addFunction1Arg( tan, "tan" );
-        
-        addFunction2Arg( pow, "pow");         // pow(x,y); returns the value of x raised to the power of y (= x^y)
-        
-    }
+FunctionParser::~FunctionParser()
+{
+    Functions_t::iterator it;
+    for( it = functions.begin(); it != functions.end(); ++it)
+        delete it->second;
+    
+    Variables_t::iterator itv;
+    for( itv = variables.begin(); itv != variables.end(); ++itv)
+        delete itv->second;
 
-public:
-    double execute()
-    {
-        result = opera.executor();
-        return result;
-    }
-    
-    bool is_ok()
-    {
-        return !err_state;
-    }
-    
-    bool parse();
-    
-private:
-    char current_token_value[1024];
-    char current_char;
+    delete opera;
+}
 
-    int current_pos;
-    const char *scanner_fct;
-    token_t current_token;
-    
-    bool err_state;
-    bool at_eof,done;
 
-    Functions_t functions;   //! maps function name to binder object
-    Variables_t variables;   //! maps variable name to binder object
-    Constants_t constants;   //! maps constant name to double value
-    
-    double result;
-};
+void FunctionParser::addFunction1Arg( double (*f)(double), const char *name)
+{
+    functions[ name ] = new FctPFunctionsBind1( f );
+}
+
+
+void FunctionParser::addFunction2Arg( double (*f)(double,double), const char *name)
+{
+    functions[ name ] = new FctPFunctionsBind2( f );
+}
 
 
 FctPVariable *FunctionParser::addVariable( const string &name )
@@ -794,7 +632,7 @@ bool FunctionParser::scanExponentPart( char *s )  // exp. part is always optiona
 }
 
 
-token_t FunctionParser::tokenize()
+FunctionParser::token_t FunctionParser::tokenize()
 {
     char *s = current_token_value ;
     token_t t;
@@ -901,6 +739,29 @@ token_t FunctionParser::tokenize()
 }
 
 
+string FunctionParser::expect( token_type_t tt, bool advance)
+{
+    string s = current_token.value;
+    
+    if( !is_here( tt ) )
+    {
+        if( tt == T_FPNUMBER && current_token.type == T_INTNUMBER )  // fp relax for ints
+        {
+            if( advance )
+                consume();
+        }
+        else
+            throw FunctionParserException(
+                string("expected ") + token_type_to_str( tt ) + " but found " +
+                token_type_to_str( current_token.type ) );
+    }
+    else if( advance )
+        consume();
+    
+    return s;
+}
+
+
 void FunctionParser::eval_function(const string &name)
 {
     assert( is_here( T_LPAREN ) );
@@ -922,7 +783,7 @@ void FunctionParser::eval_function(const string &name)
             string("wrong number of arguments for function '") + name + "'" );
     }
     
-    opera.function_op( it->second );
+    opera->function_op( it->second );
 }
 
 
@@ -932,9 +793,9 @@ void FunctionParser::eval_variable( const string &name )
     Constants_t::const_iterator it = constants.find( name );
 
     if( it != constants.end() )
-        opera.constant_op( it->second );
+        opera->constant_op( it->second );
     else
-        opera.variable_op( addVariable( name ) );
+        opera->variable_op( addVariable( name ) );
 }
 
 
@@ -945,7 +806,7 @@ void FunctionParser::eval_simple_expr()
         case T_FPNUMBER:
         case T_INTNUMBER:
             cout << current_token.value << endl;
-            opera.constant_op( double(atof(current_token.value)) );
+            opera->constant_op( double(atof(current_token.value)) );
             consume();
             break;
             
@@ -983,7 +844,7 @@ void FunctionParser::eval_unary_expr()
         // cout << "found unary minus!" << endl;
         eval_primary_expr();
         cout << "* -1" << endl;
-        opera.unary_op( T_MINUS );
+        opera->unary_op( T_MINUS );
     }
     else
         eval_simple_expr();
@@ -1017,7 +878,7 @@ void FunctionParser::eval_exponent()
         
         eval_exponent();  // evaluate from right
         cout << "^" << endl;
-        opera.op( t );
+        opera->op( t );
     }    
 }
 
@@ -1035,7 +896,7 @@ void FunctionParser::eval_multiplicative()
         
         eval_exponent();
         cout << " " << op << endl;
-        opera.op( t );
+        opera->op( t );
     }
 }
 
@@ -1053,7 +914,7 @@ void FunctionParser::eval_additive()
         
         eval_multiplicative();
         cout << " " << op << endl;
-        opera.op( t );
+        opera->op( t );
     }
 }
 
@@ -1087,120 +948,15 @@ bool FunctionParser::parse()
         }
     }
     
-    opera.assembleInstructions();
+    opera->assembleInstructions();
     
     scanner_reset();   // reset scanner
     return !err_state;
 }
 
 
-// helpers for main -------------------------------------------------------------
-
-struct var_helper {
-    string name;
-    double value;
-    double start, stop, step;
-};
-
-
-bool nextVal( vector<var_helper> &vars )
+double FunctionParser::execute()
 {
-    size_t k = vars.size()-1;
-    
-    while( k>=0 )
-    {
-        var_helper &var = vars[k];
-        if( var.value < var.stop )
-        {
-            var.value += var.step;
-            return true;
-        }
-        else if( k > 0 )
-        {
-            var.value = var.start;
-            k--;
-        }
-        else
-            return false;
-    }
-    
-    return false;
-}
-
-
-void loopThrough( FunctionParser &parser, vector<var_helper> &vars)
-{
-    while( nextVal( vars ) )
-    {        
-        for( size_t j = 0; j < vars.size(); j++)
-        {
-            var_helper &v = vars[j];
-            cout << v.name << " = " << v.value;
-            if( j < vars.size()-1 )
-                cout << ", ";
-            else
-                cout << "    ";
-        }
-        cout << "result :   " << parser.execute() << "\n";
-    }
-}
-
-
-int main( int argc, char *argv[])
-{
-    //FunctionParser parser( " 5*5*5*5*5*5*5*5*5 " );
-    //FunctionParser parser( " 1+sin(x)*cos(y)+2*sqrt(x+y)+ sin(x)*cos(y)+2*sqrt(x+y)" );
-    
-    string func;
-    cout << "function > ";
-    getline( cin, func);
-    FunctionParser parser( func );
-
-    parser.addConstant( "pi", M_PI);    // add constants, if you don't they will be treated as variables
-    
-    parser.parse();
-
-    vector<var_helper> vars;
-    vector<string> var_names = parser.getVariables();
-
-    if( var_names.size() > 0 )
-    {
-        for( size_t i = 0; i < var_names.size(); i++)
-        {
-            var_helper var;
-            var.name = var_names[i];
-            
-            string h;
-            cout << "variable " << var.name << "  start > ";
-            getline( cin, h);
-            var.start = atof( h.c_str() );  // doing it the old school way for now, C++11 has stod
-            
-            cout << "variable " << var.name << "  stop  > ";
-            getline( cin, h);
-            var.stop  = atof( h.c_str() );
-            
-            cout << "variable " << var.name << "  step  > ";
-            getline( cin, h);
-            var.step = atof( h.c_str() );
-            
-            var.value = var.start;
-            vars.push_back( var );
-        }
-
-        vars.back().value -= vars.back().step;  // a tiny bit of trickery needed for nextVal()
-        
-        for( size_t i = 0; i < vars.size(); i++)
-        {
-            var_helper &var = vars[i];
-            parser.bindVariable( var.name, &(var.value));
-        }
-        
-        loopThrough( parser, vars);
-    }
-    else   // no variables found
-    {
-        cout << "result :   " << parser.execute() << "\n";
-    }
-
-    return 0;
+    result = opera->executor();
+    return result;
 }
