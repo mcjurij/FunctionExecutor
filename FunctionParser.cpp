@@ -100,6 +100,8 @@ typedef map<string,FctPFunctions *> Functions_t;
 class FctPVariable;
 typedef map<string,FctPVariable *> Variables_t;
 
+typedef map<string,double> Constants_t;
+
 // base class for function binders
 class FctPFunctions {
 
@@ -221,7 +223,7 @@ private:
 // instructions the executor understands
 struct FunctionParserInstr {
     typedef enum { INVALID, PLUS, MINUS, MULT, DIV, POW, UNARY_MINUS,
-                   FUNCTION,VARIABLE,CONSTANT} ins_type_t;
+                   FUNCTION, VARIABLE, CONSTANT} ins_type_t;
     
     ins_type_t ins_type;
     
@@ -472,6 +474,8 @@ public:
     void bindVariable( const string &name, double *addr) const;
 
     vector<string> getVariables() const;
+
+    void addConstant( const string &name, double val);
     
     double getResult() const
     {
@@ -573,9 +577,10 @@ private:
     }
 
 public:
-    void execute()
+    double execute()
     {
         result = opera.executor();
+        return result;
     }
     
     bool is_ok()
@@ -598,7 +603,8 @@ private:
 
     Functions_t functions;   //! maps function name to binder object
     Variables_t variables;   //! maps variable name to binder object
-
+    Constants_t constants;   //! maps constant name to double value
+    
     double result;
 };
 
@@ -642,6 +648,12 @@ vector<string> FunctionParser::getVariables() const
 }
 
 
+void FunctionParser::addConstant( const string &name, double val)
+{
+    constants[ name ] = val;
+}
+
+    
 void FunctionParser::scanner_init( const char *fkt ) 
 {
     current_char = 0;
@@ -914,9 +926,15 @@ void FunctionParser::eval_function(const string &name)
 }
 
 
-void FunctionParser::eval_variable(const string &name)
+void FunctionParser::eval_variable( const string &name )
 {
-    opera.variable_op( addVariable( name ) );
+    // let's first see if it is a known constant
+    Constants_t::const_iterator it = constants.find( name );
+
+    if( it != constants.end() )
+        opera.constant_op( it->second );
+    else
+        opera.variable_op( addVariable( name ) );
 }
 
 
@@ -1113,9 +1131,7 @@ bool nextVal( vector<var_helper> &vars )
 void loopThrough( FunctionParser &parser, vector<var_helper> &vars)
 {
     while( nextVal( vars ) )
-    {
-        parser.execute();
-        
+    {        
         for( size_t j = 0; j < vars.size(); j++)
         {
             var_helper &v = vars[j];
@@ -1125,7 +1141,7 @@ void loopThrough( FunctionParser &parser, vector<var_helper> &vars)
             else
                 cout << "    ";
         }
-        cout << "result :   " << parser.getResult() << "\n";
+        cout << "result :   " << parser.execute() << "\n";
     }
 }
 
@@ -1134,11 +1150,13 @@ int main( int argc, char *argv[])
 {
     //FunctionParser parser( " 5*5*5*5*5*5*5*5*5 " );
     //FunctionParser parser( " 1+sin(x)*cos(y)+2*sqrt(x+y)+ sin(x)*cos(y)+2*sqrt(x+y)" );
-
+    
     string func;
     cout << "function > ";
     getline( cin, func);
     FunctionParser parser( func );
+
+    parser.addConstant( "pi", M_PI);    // add constants, if you don't they will be treated as variables
     
     parser.parse();
 
@@ -1181,8 +1199,7 @@ int main( int argc, char *argv[])
     }
     else   // no variables found
     {
-        parser.execute();
-        cout << "result :   " << parser.getResult() << "\n";
+        cout << "result :   " << parser.execute() << "\n";
     }
 
     return 0;

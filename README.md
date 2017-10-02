@@ -3,7 +3,10 @@ A function given as a string is parsed and intermediate code is executed
 
 Example:
 ```
-FunctionParser parser( "sin(x)" );
+FunctionParser parser( "sin(pi*x)" );
+
+parser.addConstant( "pi", M_PI);    // add constants, if you don't they will be treated as variables
+
 parser.parse();     // parse once
 
 double x;
@@ -11,8 +14,7 @@ parser.bindVariable( "x", &x);
 
 for( x = 0.; x < 4.; x+=0.2)
 {
-    parser.execute();          // "sin(x)" not parsed again, but executed
-    cout << "result :   " << parser.getResult() << "\n";
+    cout << "result : " << parser.execute() << "\n";    // "sin(pi*x)" not parsed again, but executed
 }
 ```
 
