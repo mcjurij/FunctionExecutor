@@ -138,7 +138,7 @@ private:
     char current_char;
 
     int current_pos;
-    const char *scanner_fct;
+    std::string scanner_fct;
     token_t current_token;
     
     bool err_state;
