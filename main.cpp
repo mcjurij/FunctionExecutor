@@ -73,8 +73,11 @@ int main( int argc, char *argv[])
 
     parser.addConstant( "pi", M_PI);    // add constants, if you don't they will be treated as variables
     
-    parser.parse();
+    bool ok = parser.parse();
 
+    if( !ok )
+        return 1;
+    
     vector<var_helper> vars;
     vector<string> var_names = parser.getVariables();
 

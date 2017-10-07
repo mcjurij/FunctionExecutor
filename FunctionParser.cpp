@@ -776,11 +776,19 @@ void FunctionParser::eval_function(const string &name)
     expect( T_RPAREN );
 
     Functions_t::iterator it = functions.find( name );
-    // FIXME check presence
-    if( count_args != it->second->getNumOfArgs() )
+
+    if( it != functions.end() )
+    {
+        if( count_args != it->second->getNumOfArgs() )
+        {
+            throw FunctionParserException(
+                string("wrong number of arguments for function '") + name + "'" );
+        }
+    }
+    else
     {
         throw FunctionParserException(
-            string("wrong number of arguments for function '") + name + "'" );
+            string("unknown function '") + name + "'" );
     }
     
     opera->function_op( it->second );
